@@ -5,6 +5,7 @@ import pandas as pd
 from web3 import Web3
 from replit import db
 import rollbar
+from ens import ENS
 
 logging.basicConfig(level=logging.INFO)
 
@@ -14,17 +15,22 @@ discord_config_channel = os.environ["DISCORD_CONFIG_CHANNEL_ID"]
 discord_admin = os.environ["DISCORD_ADMIN_LIST"]
 rollbar_secret_key = os.environ["ROLLBAR_SECRET_KEY"]
 rollbar_environment = os.environ["ROLLBAR_ENVIRONMENT"]
+infura_api_key = os.environ["INFURA_API_KEY"]
+
 rollbar.init(rollbar_secret_key, rollbar_environment)
 
 client = discord.Client()
 guild = discord.Guild
+w3 = Web3(
+    Web3.HTTPProvider("https://mainnet.infura.io/v3/{infura_api_key}".format(
+        infura_api_key=infura_api_key)))
 
 success_color = 0x0027FF
 error_color = 0xFF0000
 valid_color = 0x00FF00
 
-allowlist_command = "!dreamlist"
-allowlist_check_command = "!dreamcheck"
+allowlist_command = "!dreamlist "
+allowlist_check_command = "!dreamcheck "
 allowlist_admin = "!dreamadmin"
 
 discord_watching_text = "the Dreamers"
@@ -44,11 +50,15 @@ async def on_message(message):
     if message.author == client.user:
         return
 
+    ns = ENS.fromWeb3(w3)
+
     if str(message.channel.id) == discord_channel:
         if message.content.startswith(allowlist_command):
             try:
                 if len(message.content.split()) > 1:
                     address = message.content.split()[1:][0]
+                    if address.endswith(".eth"):
+                        address = ns.address(address)
                     invocation = 1
                     if Web3.isAddress(address):
                         db[str(author_id)] = {
@@ -113,10 +123,11 @@ async def on_message(message):
                                         description="""Try again.""",
                                         color=error_color))
         else:
-          try:
-            await message.delete()
-          except:
-            rollbar.report_exc_info()
+            try:
+                if str(author_id) not in discord_admin:
+                    await message.delete()
+            except:
+                rollbar.report_exc_info()
     if str(message.channel.id) == discord_config_channel:
         if message.content.startswith(allowlist_admin):
             try:
