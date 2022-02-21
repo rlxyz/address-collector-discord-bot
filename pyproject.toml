@@ -10,6 +10,8 @@ discord = "^1.7.3"
 pandas = "^1.4.1"
 web3 = "^5.28.0"
 replit = "^3.2.4"
+py-cord = "^1.7.3"
+discord-ui = "^5.1.6"
 
 [tool.poetry.dev-dependencies]
 
