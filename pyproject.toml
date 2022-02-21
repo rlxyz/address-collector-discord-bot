@@ -10,6 +10,7 @@ discord = "^1.7.3"
 pandas = "^1.4.1"
 web3 = "^5.28.0"
 replit = "^3.2.4"
+rollbar = "^0.16.2"
 
 [tool.poetry.dev-dependencies]
 

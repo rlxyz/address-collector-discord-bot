@@ -7,12 +7,16 @@ from replit import db
 
 logging.basicConfig(level=logging.INFO)
 
+discord_token = os.environ["DISCORD_TOKEN"]
+discord_channel = os.environ["DISCORD_CHANNEL_ID"]
+
 client = discord.Client()
 guild = discord.Guild
 
 success_color = 0x0027FF
 error_color = 0xFF0000
 valid_color = 0x00FF00
+
 
 @client.event
 async def on_ready():
@@ -24,31 +28,40 @@ async def on_ready():
 async def on_message(message):
     author_id = message.author.id
 
+    if str(message.channel.id) != discord_channel:
+        return
+
     if message.author == client.user:
         return
+
     elif message.content.startswith('!dreamlist'):
-        if len(message.content.split()) > 1:
-            address = message.content.split()[1:][0]
-            invocation = 1
-            isAddress = Web3.isAddress(address)
-            if isAddress:
-                db[str(author_id)] = {
-                    "address": address,
-                    "invocation": invocation
-                }
-                await message.reply(embed=discord.Embed(
-                    title="A dreamer has been born ~",
-                    description=
-                    """<@{username}> you are now added into the dreamlist\n\nDreamlist address: [{address}](https://etherscan.io/address/{address})\n\nAllocation: {invocation}"""
-                    .format(username=author_id,
-                            address=address,
-                            invocation=invocation),
-                    color=success_color))
-            else:
-                await message.reply(embed=discord.Embed(
-                    title="Opps, You're not a dreamer ~",
-                    description="""Invalid ETH address supplied. Try again.""",
-                    color=error_color))
+        try:
+            if len(message.content.split()) > 1:
+                address = message.content.split()[1:][0]
+                invocation = 1
+                if Web3.isAddress(address):
+                    db[str(author_id)] = {
+                        "address": address,
+                        "invocation": invocation
+                    }
+                    await message.reply(embed=discord.Embed(
+                        title="A dreamer has been born ~",
+                        description=
+                        """<@{username}> you are now added into the dreamlist\n\nDreamlist address: [{address}](https://etherscan.io/address/{address})\n\nAllocation: {invocation}"""
+                        .format(username=author_id,
+                                address=address,
+                                invocation=invocation),
+                        color=success_color))
+                else:
+                    await message.reply(embed=discord.Embed(
+                        title="Opps, You're not a dreamer ~",
+                        description=
+                        """Invalid ETH address supplied. Try again.""",
+                        color=error_color))
+        except:
+            # do_something
+            print('add_rollbar_here')
+
     elif message.content.startswith('!dreamcheck'):
         try:
             value = db[str(author_id)]
@@ -61,15 +74,20 @@ async def on_message(message):
                             address=value["address"],
                             invocation=value["invocation"]),
                     color=valid_color))
+            else:
+                await message.reply(
+                    embed=discord.Embed(title="Opps, You're not a dreamer ~",
+                                        description="""Try again.""",
+                                        color=error_color))
         except:
-            await message.reply(
-                embed=discord.Embed(title="Opps, You're not a dreamer ~",
-                                    description="""Try again.""",
-                                    color=error_color))
-    elif message.content.startswith('!dreamlist'):
+            # do_something
+            print('add_rollbar_here')
+
+    elif message.content.startswith('!dreamadmin'):
         keys = db.keys()
         for key in keys:
             print(key)
+
     elif message.content.startswith('!'):
         cmd = message.content.split()[0].replace("!", "")
         if len(message.content.split()) > 1:
@@ -157,4 +175,4 @@ async def on_message(message):
             os.remove(file_location)  # Deleting the file
 
 
-client.run('OTQ1MTM2NTM1MTgxODgxNDk2.YhLw_Q.fcrXBS55OD8IOpCF7oiLbpv1iMw')
+client.run(discord_token)
