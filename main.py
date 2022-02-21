@@ -93,7 +93,7 @@ async def on_message(message):
             except:
                 rollbar.report_exc_info()
 
-        if message.content.startswith(allowlist_check_command):
+        elif message.content.startswith(allowlist_check_command):
             try:
                 value = db[str(author_id)]
                 if value:
@@ -112,7 +112,11 @@ async def on_message(message):
                     embed=discord.Embed(title="Opps, You're not a dreamer ~",
                                         description="""Try again.""",
                                         color=error_color))
-
+        else:
+          try:
+            await message.delete()
+          except:
+            rollbar.report_exc_info()
     if str(message.channel.id) == discord_config_channel:
         if message.content.startswith(allowlist_admin):
             try:
